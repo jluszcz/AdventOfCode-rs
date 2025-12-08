@@ -1,4 +1,6 @@
 pub mod grid;
+pub mod logging;
+pub mod math;
 
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -7,7 +9,6 @@ use std::str::FromStr;
 
 use anyhow::{Result, anyhow};
 use clap::{Arg, ArgAction, Command};
-use env_logger::Target;
 use log::{LevelFilter, trace};
 
 const INPUT_PATH: &str = "input/input";
@@ -66,7 +67,7 @@ pub fn init() -> Result<Vec<String>> {
         (Input::Test, true) => LevelFilter::Trace,
     };
 
-    init_logger(log_level)?;
+    logging::init_logger(log_level)?;
 
     match input {
         Input::Actual => self::input(),
@@ -75,26 +76,8 @@ pub fn init() -> Result<Vec<String>> {
 }
 
 pub fn init_test() -> Result<Vec<String>> {
-    init_test_logger()?;
+    logging::init_test_logger()?;
     test_input()
-}
-
-fn init_logger(level: LevelFilter) -> Result<()> {
-    inner_init_logger(Some(level), false)
-}
-
-pub fn init_test_logger() -> Result<()> {
-    inner_init_logger(Some(LevelFilter::Trace), true)
-}
-
-fn inner_init_logger(level: Option<LevelFilter>, is_test: bool) -> Result<()> {
-    let _ = env_logger::builder()
-        .target(Target::Stdout)
-        .filter_level(level.unwrap_or(LevelFilter::Info))
-        .is_test(is_test)
-        .try_init();
-
-    Ok(())
 }
 
 fn input() -> Result<Vec<String>> {
@@ -116,55 +99,5 @@ fn read_lines(path: &'static str) -> Result<Vec<String>> {
         Ok(lines)
     } else {
         Err(anyhow!("No input: {}", path))
-    }
-}
-
-#[derive(Debug)]
-pub struct MinMax {
-    pub min: Option<usize>,
-    pub max: Option<usize>,
-}
-
-impl FromIterator<usize> for MinMax {
-    fn from_iter<T: IntoIterator<Item = usize>>(iter: T) -> Self {
-        let mut min = None;
-        let mut max = None;
-
-        for i in iter {
-            min = match min {
-                None => Some(i),
-                Some(m) => Some(usize::min(m, i)),
-            };
-            max = match max {
-                None => Some(i),
-                Some(m) => Some(usize::max(m, i)),
-            };
-        }
-
-        MinMax { min, max }
-    }
-}
-
-pub fn greatest_common_divisor(a: usize, b: usize) -> usize {
-    if b > a {
-        greatest_common_divisor(b, a)
-    } else if b == 0 {
-        a
-    } else {
-        greatest_common_divisor(b, a % b)
-    }
-}
-
-pub fn least_common_multiple(a: usize, b: usize) -> usize {
-    (a * b) / greatest_common_divisor(a, b)
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn test_greatest_common_divisor() {
-        assert_eq!(6, greatest_common_divisor(48, 18));
     }
 }
