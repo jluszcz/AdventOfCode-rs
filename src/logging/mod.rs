@@ -10,11 +10,11 @@ pub fn init_test_logger() -> anyhow::Result<()> {
 }
 
 fn init_logger_inner(level: Option<LevelFilter>, is_test: bool) -> anyhow::Result<()> {
-    env_logger::builder()
+    let _ = env_logger::builder()
         .target(Target::Stdout)
         .filter_level(level.unwrap_or(LevelFilter::Info))
         .is_test(is_test)
-        .try_init()?;
+        .try_init();
 
     Ok(())
 }
