@@ -1,5 +1,5 @@
 use anyhow::{Result, bail};
-use std::fmt::Display;
+use std::fmt::{Debug, Display, Formatter};
 use std::io::Write;
 use std::ops::{Deref, DerefMut, Index, IndexMut};
 
@@ -87,7 +87,7 @@ impl<'a, T> IntoIterator for &'a mut Grid<T> {
     }
 }
 
-#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
+#[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub struct Point {
     pub x: usize,
     pub y: usize,
@@ -102,6 +102,18 @@ impl Point {
 impl From<Point> for (usize, usize) {
     fn from(value: Point) -> Self {
         (value.x, value.y)
+    }
+}
+
+impl Display for Point {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({}, {})", self.x, self.y)
+    }
+}
+
+impl Debug for Point {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{self}")
     }
 }
 
