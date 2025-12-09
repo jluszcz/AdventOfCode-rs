@@ -1,7 +1,8 @@
-use anyhow::{Result, bail};
+use anyhow::{Result, anyhow, bail};
 use std::fmt::{Debug, Display, Formatter};
 use std::io::Write;
 use std::ops::{Deref, DerefMut, Index, IndexMut};
+use std::str::FromStr;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Grid<T>(Vec<Vec<T>>);
@@ -114,6 +115,15 @@ impl Display for Point {
 impl Debug for Point {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{self}")
+    }
+}
+
+impl FromStr for Point {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self> {
+        let (x, y) = s.split_once(',').ok_or_else(|| anyhow!("Invalid point"))?;
+        Ok(Self::new(x.parse()?, y.parse()?))
     }
 }
 
