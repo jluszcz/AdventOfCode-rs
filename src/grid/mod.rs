@@ -1,8 +1,8 @@
-use anyhow::{Result, anyhow, bail};
-use std::fmt::{Debug, Display, Formatter};
+use crate::math::two_dimensional::Point;
+use anyhow::{Result, bail};
+use std::fmt::{Debug, Display};
 use std::io::Write;
 use std::ops::{Deref, DerefMut, Index, IndexMut};
-use std::str::FromStr;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Grid<T>(Vec<Vec<T>>);
@@ -85,45 +85,6 @@ impl<'a, T> IntoIterator for &'a mut Grid<T> {
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.iter_mut()
-    }
-}
-
-#[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
-pub struct Point {
-    pub x: usize,
-    pub y: usize,
-}
-
-impl Point {
-    pub fn new(x: usize, y: usize) -> Self {
-        Self { x, y }
-    }
-}
-
-impl From<Point> for (usize, usize) {
-    fn from(value: Point) -> Self {
-        (value.x, value.y)
-    }
-}
-
-impl Display for Point {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "({}, {})", self.x, self.y)
-    }
-}
-
-impl Debug for Point {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{self}")
-    }
-}
-
-impl FromStr for Point {
-    type Err = anyhow::Error;
-
-    fn from_str(s: &str) -> Result<Self> {
-        let (x, y) = s.split_once(',').ok_or_else(|| anyhow!("Invalid point"))?;
-        Ok(Self::new(x.parse()?, y.parse()?))
     }
 }
 

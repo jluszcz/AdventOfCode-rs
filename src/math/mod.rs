@@ -1,5 +1,117 @@
+use anyhow::anyhow;
+use anyhow::bail;
 use std::cmp::{max, min};
+use std::fmt::{Debug, Display, Formatter};
 use std::ops::{Div, Mul, Rem};
+use std::str::FromStr;
+
+pub mod two_dimensional {
+    use super::*;
+
+    #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
+    pub struct Point {
+        pub x: usize,
+        pub y: usize,
+    }
+
+    impl Point {
+        pub fn new(x: usize, y: usize) -> Self {
+            Self { x, y }
+        }
+
+        pub fn distance(&self, other: &Point) -> f64 {
+            let dx = (self.x as f64) - (other.x as f64);
+            let dy = (self.y as f64) - (other.y as f64);
+            (dx * dx + dy * dy).sqrt()
+        }
+    }
+
+    impl From<Point> for (usize, usize) {
+        fn from(value: Point) -> Self {
+            (value.x, value.y)
+        }
+    }
+
+    impl Display for Point {
+        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+            write!(f, "({}, {})", self.x, self.y)
+        }
+    }
+
+    impl Debug for Point {
+        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+            write!(f, "{self}")
+        }
+    }
+
+    impl FromStr for Point {
+        type Err = anyhow::Error;
+
+        fn from_str(s: &str) -> anyhow::Result<Self> {
+            let (x, y) = s.split_once(',').ok_or_else(|| anyhow!("Invalid point"))?;
+            Ok(Self::new(x.parse()?, y.parse()?))
+        }
+    }
+}
+
+pub mod three_dimensional {
+    use super::*;
+
+    #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
+    pub struct Point {
+        pub x: usize,
+        pub y: usize,
+        pub z: usize,
+    }
+
+    impl Point {
+        pub fn new(x: usize, y: usize, z: usize) -> Self {
+            Self { x, y, z }
+        }
+
+        pub fn distance(&self, other: &Point) -> f64 {
+            let dx = (self.x as f64) - (other.x as f64);
+            let dy = (self.y as f64) - (other.y as f64);
+            let dz = (self.z as f64) - (other.z as f64);
+            (dx * dx + dy * dy + dz * dz).sqrt()
+        }
+    }
+
+    impl From<Point> for (usize, usize, usize) {
+        fn from(value: Point) -> Self {
+            (value.x, value.y, value.z)
+        }
+    }
+
+    impl Display for Point {
+        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+            write!(f, "({}, {}, {})", self.x, self.y, self.z)
+        }
+    }
+
+    impl Debug for Point {
+        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+            write!(f, "{self}")
+        }
+    }
+
+    impl FromStr for Point {
+        type Err = anyhow::Error;
+
+        fn from_str(s: &str) -> anyhow::Result<Self> {
+            let parts = s.split(',').collect::<Vec<_>>();
+            if parts.len() != 3 {
+                bail!("Invalid point");
+            }
+
+            let x = parts[0].parse()?;
+            let y = parts[1].parse()?;
+            let z = parts[2].parse()?;
+
+            Ok(Self::new(x, y, z))
+        }
+    }
+}
 
 #[derive(Debug, Copy, Clone, Default)]
 pub struct MinMax<T> {
