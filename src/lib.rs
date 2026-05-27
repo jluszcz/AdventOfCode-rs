@@ -88,16 +88,13 @@ fn test_input() -> Result<Vec<String>> {
     read_lines(TEST_INPUT_PATH)
 }
 
-fn read_lines(path: &'static str) -> Result<Vec<String>> {
-    let lines: Vec<_> = BufReader::new(File::open(Path::new(path))?)
-        .lines()
-        .map_while(Result::ok)
-        .inspect(|l| trace!("{}", l))
-        .collect();
-
-    if !lines.is_empty() {
-        Ok(lines)
-    } else {
-        Err(anyhow!("No input: {}", path))
+fn read_lines(path: impl AsRef<Path>) -> Result<Vec<String>> {
+    let reader = BufReader::new(File::open(path.as_ref())?);
+    let mut lines = Vec::new();
+    for line in reader.lines() {
+        let line = line?;
+        trace!("{}", line);
+        lines.push(line);
     }
+    Ok(lines)
 }

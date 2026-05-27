@@ -70,21 +70,49 @@ impl<T> IndexMut<Point> for Grid<T> {
     }
 }
 
+pub struct Rows<'a, T> {
+    inner: std::slice::Iter<'a, Vec<T>>,
+}
+
+impl<'a, T> Iterator for Rows<'a, T> {
+    type Item = &'a [T];
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next().map(Vec::as_slice)
+    }
+}
+
+pub struct RowsMut<'a, T> {
+    inner: std::slice::IterMut<'a, Vec<T>>,
+}
+
+impl<'a, T> Iterator for RowsMut<'a, T> {
+    type Item = &'a mut [T];
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next().map(Vec::as_mut_slice)
+    }
+}
+
 impl<'a, T> IntoIterator for &'a Grid<T> {
-    type Item = &'a Vec<T>;
-    type IntoIter = std::slice::Iter<'a, Vec<T>>;
+    type Item = &'a [T];
+    type IntoIter = Rows<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.0.iter()
+        Rows {
+            inner: self.0.iter(),
+        }
     }
 }
 
 impl<'a, T> IntoIterator for &'a mut Grid<T> {
-    type Item = &'a mut Vec<T>;
-    type IntoIter = std::slice::IterMut<'a, Vec<T>>;
+    type Item = &'a mut [T];
+    type IntoIter = RowsMut<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.0.iter_mut()
+        RowsMut {
+            inner: self.0.iter_mut(),
+        }
     }
 }
 
@@ -98,6 +126,21 @@ pub enum Direction {
     UpperLeft,
     LowerRight,
     LowerLeft,
+}
+
+impl Direction {
+    pub fn delta(self) -> (isize, isize) {
+        match self {
+            Direction::Up => (0, -1),
+            Direction::Down => (0, 1),
+            Direction::Left => (-1, 0),
+            Direction::Right => (1, 0),
+            Direction::UpperLeft => (-1, -1),
+            Direction::UpperRight => (1, -1),
+            Direction::LowerLeft => (-1, 1),
+            Direction::LowerRight => (1, 1),
+        }
+    }
 }
 
 impl From<Direction> for char {
@@ -130,47 +173,7 @@ impl Neighbor {
     }
 
     pub fn next<T>(self, grid: &Grid<T>) -> Option<Neighbor> {
-        let Neighbor {
-            direction,
-            position,
-        } = self;
-        let x = position.x;
-        let y = position.y;
-
-        match direction {
-            Direction::Right => grid
-                .get(Point::new(x + 1, y))
-                .map(|_| Self::new(Direction::Right, Point::new(x + 1, y))),
-            Direction::Left => x
-                .checked_sub(1)
-                .and_then(|new_x| grid.get(Point::new(new_x, y)))
-                .map(|_| Self::new(Direction::Left, Point::new(x - 1, y))),
-            Direction::Up => y
-                .checked_sub(1)
-                .and_then(|new_y| grid.get(Point::new(x, new_y)))
-                .map(|_| Self::new(Direction::Up, Point::new(x, y - 1))),
-            Direction::Down => grid
-                .get(Point::new(x, y + 1))
-                .map(|_| Self::new(Direction::Down, Point::new(x, y + 1))),
-            Direction::UpperRight => y
-                .checked_sub(1)
-                .and_then(|new_y| grid.get(Point::new(x + 1, new_y)))
-                .map(|_| Self::new(Direction::UpperRight, Point::new(x + 1, y - 1))),
-            Direction::UpperLeft => y
-                .checked_sub(1)
-                .and_then(|new_y| {
-                    x.checked_sub(1)
-                        .and_then(|new_x| grid.get(Point::new(new_x, new_y)))
-                })
-                .map(|_| Self::new(Direction::UpperLeft, Point::new(x - 1, y - 1))),
-            Direction::LowerRight => grid
-                .get(Point::new(x + 1, y + 1))
-                .map(|_| Self::new(Direction::LowerRight, Point::new(x + 1, y + 1))),
-            Direction::LowerLeft => x
-                .checked_sub(1)
-                .and_then(|new_x| grid.get(Point::new(new_x, y + 1)))
-                .map(|_| Self::new(Direction::LowerLeft, Point::new(x - 1, y + 1))),
-        }
+        neighbor_in_direction(grid, self.direction, self.position)
     }
 }
 
@@ -191,43 +194,12 @@ pub fn neighbor_in_direction<T>(
     direction: Direction,
     position: Point,
 ) -> Option<Neighbor> {
-    let x = position.x;
-    let y = position.y;
-
-    match direction {
-        Direction::Up => y
-            .checked_sub(1)
-            .and_then(|new_y| grid.get(Point::new(x, new_y)))
-            .map(|_| Neighbor::new(direction, Point::new(x, y - 1))),
-        Direction::Down => grid
-            .get(Point::new(x, y + 1))
-            .map(|_| Neighbor::new(direction, Point::new(x, y + 1))),
-        Direction::Left => x
-            .checked_sub(1)
-            .and_then(|new_x| grid.get(Point::new(new_x, y)))
-            .map(|_| Neighbor::new(direction, Point::new(x - 1, y))),
-        Direction::Right => grid
-            .get(Point::new(x + 1, y))
-            .map(|_| Neighbor::new(direction, Point::new(x + 1, y))),
-        Direction::UpperLeft => y
-            .checked_sub(1)
-            .and_then(|new_y| {
-                x.checked_sub(1)
-                    .and_then(|new_x| grid.get(Point::new(new_x, new_y)))
-            })
-            .map(|_| Neighbor::new(direction, Point::new(x - 1, y - 1))),
-        Direction::UpperRight => y
-            .checked_sub(1)
-            .and_then(|new_y| grid.get(Point::new(x + 1, new_y)))
-            .map(|_| Neighbor::new(direction, Point::new(x + 1, y - 1))),
-        Direction::LowerLeft => x
-            .checked_sub(1)
-            .and_then(|new_x| grid.get(Point::new(new_x, y + 1)))
-            .map(|_| Neighbor::new(direction, Point::new(x - 1, y + 1))),
-        Direction::LowerRight => grid
-            .get(Point::new(x + 1, y + 1))
-            .map(|_| Neighbor::new(direction, Point::new(x + 1, y + 1))),
-    }
+    let (dx, dy) = direction.delta();
+    let x = position.x.checked_add_signed(dx)?;
+    let y = position.y.checked_add_signed(dy)?;
+    let new_position = Point::new(x, y);
+    grid.get(new_position)
+        .map(|_| Neighbor::new(direction, new_position))
 }
 
 pub fn neighbors<T>(grid: &Grid<T>, position: Point, include_diagonals: bool) -> Vec<Neighbor> {
@@ -415,6 +387,65 @@ mod tests {
         );
 
         Ok(())
+    }
+
+    #[test]
+    fn test_neighbor_next() -> Result<()> {
+        let grid = Grid::try_from(vec![vec![0; 5]; 5])?;
+
+        // Step right one cell
+        let n = Neighbor::new(Direction::Right, Point::new(0, 2));
+        let next = n.next(&grid).expect("right step inside grid");
+        assert_eq!(next.position, Point::new(1, 2));
+        assert_eq!(next.direction, Direction::Right);
+
+        // Step off the right edge
+        let edge = Neighbor::new(Direction::Right, Point::new(4, 2));
+        assert!(edge.next(&grid).is_none());
+
+        // Step off the top edge (underflow)
+        let top = Neighbor::new(Direction::Up, Point::new(2, 0));
+        assert!(top.next(&grid).is_none());
+
+        // Step off the left edge (underflow)
+        let left = Neighbor::new(Direction::Left, Point::new(0, 2));
+        assert!(left.next(&grid).is_none());
+
+        // Diagonal step into the grid
+        let diag = Neighbor::new(Direction::UpperLeft, Point::new(2, 2));
+        let next = diag.next(&grid).expect("upper-left step inside grid");
+        assert_eq!(next.position, Point::new(1, 1));
+        assert_eq!(next.direction, Direction::UpperLeft);
+
+        // Diagonal step off the corner
+        let corner = Neighbor::new(Direction::UpperLeft, Point::new(0, 0));
+        assert!(corner.next(&grid).is_none());
+
+        // Walk across a row by repeatedly calling next
+        let mut cur = Neighbor::new(Direction::Right, Point::new(0, 0));
+        let mut visited = vec![cur.position];
+        while let Some(n) = cur.next(&grid) {
+            visited.push(n.position);
+            cur = n;
+        }
+        assert_eq!(
+            visited,
+            (0..5).map(|x| Point::new(x, 0)).collect::<Vec<_>>()
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_direction_delta() {
+        assert_eq!(Direction::Up.delta(), (0, -1));
+        assert_eq!(Direction::Down.delta(), (0, 1));
+        assert_eq!(Direction::Left.delta(), (-1, 0));
+        assert_eq!(Direction::Right.delta(), (1, 0));
+        assert_eq!(Direction::UpperLeft.delta(), (-1, -1));
+        assert_eq!(Direction::UpperRight.delta(), (1, -1));
+        assert_eq!(Direction::LowerLeft.delta(), (-1, 1));
+        assert_eq!(Direction::LowerRight.delta(), (1, 1));
     }
 
     #[test]
