@@ -2,49 +2,88 @@ use anyhow::anyhow;
 use anyhow::bail;
 use std::cmp::{max, min};
 use std::fmt::{Debug, Display, Formatter};
-use std::ops::{Div, Mul, Rem};
+use std::ops::{Add, Div, Mul, Rem, Sub};
 use std::str::FromStr;
+
+pub trait ToF64: Copy {
+    fn to_f64(self) -> f64;
+}
+
+macro_rules! impl_to_f64 {
+    ($($t:ty),*) => {
+        $(impl ToF64 for $t {
+            fn to_f64(self) -> f64 { self as f64 }
+        })*
+    };
+}
+
+impl_to_f64!(u8, u16, u32, u64, usize, i8, i16, i32, i64, isize, f32, f64);
 
 pub mod two_dimensional {
     use super::*;
 
-    #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
-    pub struct Point {
-        pub x: usize,
-        pub y: usize,
+    #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
+    pub struct Point<T = usize> {
+        pub x: T,
+        pub y: T,
     }
 
-    impl Point {
-        pub fn new(x: usize, y: usize) -> Self {
+    impl<T> Point<T> {
+        pub fn new(x: T, y: T) -> Self {
             Self { x, y }
         }
+    }
 
-        pub fn distance(&self, other: &Point) -> f64 {
-            let dx = (self.x as f64) - (other.x as f64);
-            let dy = (self.y as f64) - (other.y as f64);
+    impl<T: ToF64> Point<T> {
+        pub fn distance(&self, other: &Self) -> f64 {
+            let dx = self.x.to_f64() - other.x.to_f64();
+            let dy = self.y.to_f64() - other.y.to_f64();
             (dx * dx + dy * dy).sqrt()
         }
     }
 
-    impl From<Point> for (usize, usize) {
-        fn from(value: Point) -> Self {
+    impl<T> Point<T>
+    where
+        T: Copy + Ord + Sub<Output = T> + Add<Output = T>,
+    {
+        pub fn manhattan_distance(&self, other: &Self) -> T {
+            let dx = if self.x >= other.x {
+                self.x - other.x
+            } else {
+                other.x - self.x
+            };
+            let dy = if self.y >= other.y {
+                self.y - other.y
+            } else {
+                other.y - self.y
+            };
+            dx + dy
+        }
+    }
+
+    impl<T> From<Point<T>> for (T, T) {
+        fn from(value: Point<T>) -> Self {
             (value.x, value.y)
         }
     }
 
-    impl Display for Point {
+    impl<T: Display> Display for Point<T> {
         fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
             write!(f, "({}, {})", self.x, self.y)
         }
     }
 
-    impl Debug for Point {
+    impl<T: Display> Debug for Point<T> {
         fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
             write!(f, "{self}")
         }
     }
 
-    impl FromStr for Point {
+    impl<T> FromStr for Point<T>
+    where
+        T: FromStr,
+        T::Err: std::error::Error + Send + Sync + 'static,
+    {
         type Err = anyhow::Error;
 
         fn from_str(s: &str) -> anyhow::Result<Self> {
@@ -57,45 +96,75 @@ pub mod two_dimensional {
 pub mod three_dimensional {
     use super::*;
 
-    #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
-    pub struct Point {
-        pub x: usize,
-        pub y: usize,
-        pub z: usize,
+    #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
+    pub struct Point<T = usize> {
+        pub x: T,
+        pub y: T,
+        pub z: T,
     }
 
-    impl Point {
-        pub fn new(x: usize, y: usize, z: usize) -> Self {
+    impl<T> Point<T> {
+        pub fn new(x: T, y: T, z: T) -> Self {
             Self { x, y, z }
         }
+    }
 
-        pub fn distance(&self, other: &Point) -> f64 {
-            let dx = (self.x as f64) - (other.x as f64);
-            let dy = (self.y as f64) - (other.y as f64);
-            let dz = (self.z as f64) - (other.z as f64);
+    impl<T: ToF64> Point<T> {
+        pub fn distance(&self, other: &Self) -> f64 {
+            let dx = self.x.to_f64() - other.x.to_f64();
+            let dy = self.y.to_f64() - other.y.to_f64();
+            let dz = self.z.to_f64() - other.z.to_f64();
             (dx * dx + dy * dy + dz * dz).sqrt()
         }
     }
 
-    impl From<Point> for (usize, usize, usize) {
-        fn from(value: Point) -> Self {
+    impl<T> Point<T>
+    where
+        T: Copy + Ord + Sub<Output = T> + Add<Output = T>,
+    {
+        pub fn manhattan_distance(&self, other: &Self) -> T {
+            let dx = if self.x >= other.x {
+                self.x - other.x
+            } else {
+                other.x - self.x
+            };
+            let dy = if self.y >= other.y {
+                self.y - other.y
+            } else {
+                other.y - self.y
+            };
+            let dz = if self.z >= other.z {
+                self.z - other.z
+            } else {
+                other.z - self.z
+            };
+            dx + dy + dz
+        }
+    }
+
+    impl<T> From<Point<T>> for (T, T, T) {
+        fn from(value: Point<T>) -> Self {
             (value.x, value.y, value.z)
         }
     }
 
-    impl Display for Point {
+    impl<T: Display> Display for Point<T> {
         fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
             write!(f, "({}, {}, {})", self.x, self.y, self.z)
         }
     }
 
-    impl Debug for Point {
+    impl<T: Display> Debug for Point<T> {
         fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
             write!(f, "{self}")
         }
     }
 
-    impl FromStr for Point {
+    impl<T> FromStr for Point<T>
+    where
+        T: FromStr,
+        T::Err: std::error::Error + Send + Sync + 'static,
+    {
         type Err = anyhow::Error;
 
         fn from_str(s: &str) -> anyhow::Result<Self> {
@@ -119,7 +188,6 @@ pub struct MinMax<T> {
     pub max: Option<T>,
 }
 
-// For owned values
 impl<T: Ord + Copy> FromIterator<T> for MinMax<T> {
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
         let mut min_val = None;
@@ -143,27 +211,9 @@ impl<T: Ord + Copy> FromIterator<T> for MinMax<T> {
     }
 }
 
-// For references - enables iter() instead of into_iter()
 impl<'a, T: Ord + Copy + 'a> FromIterator<&'a T> for MinMax<T> {
     fn from_iter<I: IntoIterator<Item = &'a T>>(iter: I) -> Self {
-        let mut min_val = None;
-        let mut max_val = None;
-
-        for &i in iter {
-            min_val = Some(match min_val {
-                None => i,
-                Some(m) => min(m, i),
-            });
-            max_val = Some(match max_val {
-                None => i,
-                Some(m) => max(m, i),
-            });
-        }
-
-        MinMax {
-            min: min_val,
-            max: max_val,
-        }
+        iter.into_iter().copied().collect()
     }
 }
 
@@ -235,5 +285,55 @@ mod tests {
         let min_max_u64 = values_u64.into_iter().collect::<MinMax<u64>>();
         assert_eq!(min_max_u64.min, Some(500));
         assert_eq!(min_max_u64.max, Some(2000));
+    }
+
+    #[test]
+    fn test_manhattan_distance_2d() {
+        let p1 = two_dimensional::Point::new(0usize, 0);
+        let p2 = two_dimensional::Point::new(3usize, 4);
+        assert_eq!(p1.manhattan_distance(&p2), 7);
+        assert_eq!(p2.manhattan_distance(&p1), 7);
+
+        // Mixed-sign coordinates via signed type
+        let p3 = two_dimensional::Point::new(-5i32, 3);
+        let p4 = two_dimensional::Point::new(2i32, -1);
+        assert_eq!(p3.manhattan_distance(&p4), 11);
+    }
+
+    #[test]
+    fn test_manhattan_distance_3d() {
+        let p1 = three_dimensional::Point::new(0usize, 0, 0);
+        let p2 = three_dimensional::Point::new(1usize, 2, 3);
+        assert_eq!(p1.manhattan_distance(&p2), 6);
+
+        let p3 = three_dimensional::Point::new(-1i64, -2, -3);
+        let p4 = three_dimensional::Point::new(1i64, 2, 3);
+        assert_eq!(p3.manhattan_distance(&p4), 12);
+    }
+
+    #[test]
+    fn test_point_2d_signed_parse() {
+        let p: two_dimensional::Point<i64> = "-5,3".parse().unwrap();
+        assert_eq!(p.x, -5);
+        assert_eq!(p.y, 3);
+    }
+
+    #[test]
+    fn test_point_3d_signed_parse() {
+        let p: three_dimensional::Point<i64> = "-1,2,-3".parse().unwrap();
+        assert_eq!(p.x, -1);
+        assert_eq!(p.y, 2);
+        assert_eq!(p.z, -3);
+    }
+
+    #[test]
+    fn test_point_distance() {
+        let p1 = two_dimensional::Point::new(0usize, 0);
+        let p2 = two_dimensional::Point::new(3usize, 4);
+        assert_eq!(p1.distance(&p2), 5.0);
+
+        let p3 = three_dimensional::Point::new(0i64, 0, 0);
+        let p4 = three_dimensional::Point::new(2i64, 3, 6);
+        assert_eq!(p4.distance(&p3), 7.0);
     }
 }
