@@ -8,7 +8,7 @@ use std::path::Path;
 use std::str::FromStr;
 
 use anyhow::{Result, anyhow};
-use clap::{Arg, ArgAction, Command};
+use clap::Parser;
 use log::{LevelFilter, trace};
 
 const INPUT_PATH: &str = "input/input";
@@ -32,36 +32,23 @@ impl FromStr for Input {
     }
 }
 
-pub fn init() -> Result<Vec<String>> {
-    let matches = Command::new("advent-of-code")
-        .version(env!("CARGO_PKG_VERSION"))
-        .author("Jacob Luszcz")
-        .infer_long_args(true)
-        .arg(
-            Arg::new("verbose")
-                .short('v')
-                .long("verbose")
-                .action(ArgAction::SetTrue)
-                .help("increase log level from the default for the input type"),
-        )
-        .arg(
-            Arg::new("input")
-                .short('i')
-                .long("input")
-                .default_value("actual")
-                .help(format!(
-                    "input type, {:?} or {:?}",
-                    Input::Test,
-                    Input::Actual
-                )),
-        )
-        .get_matches();
+#[derive(Debug, Parser)]
+#[command(name = "advent-of-code", version, author, infer_long_args = true)]
+struct Args {
+    /// increase log level from the default for the input type
+    #[arg(short, long)]
+    verbose: bool,
 
-    let verbose = matches.get_flag("verbose");
-    let input = matches
-        .get_one::<String>("input")
-        .map(|s| Input::from_str(s))
-        .unwrap()?;
+    /// input type, Test or Actual
+    #[arg(short, long, default_value = "actual")]
+    input: String,
+}
+
+pub fn init() -> Result<Vec<String>> {
+    let args = Args::parse();
+
+    let verbose = args.verbose;
+    let input = Input::from_str(&args.input)?;
 
     let log_level = match (input, verbose) {
         (Input::Actual, false) => LevelFilter::Info,
