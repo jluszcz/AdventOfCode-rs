@@ -25,7 +25,7 @@ jobs:
       - name: Update and Configure Rust
         run: |
           rustup update
-          rustup component add clippy
+          rustup component add clippy rustfmt
 
       - name: Dump Toolchain Info
         run: |
@@ -39,5 +39,8 @@ jobs:
       - name: Test
         run: cargo test
 
+      - name: Format
+        run: cargo fmt --check
+
       - name: Lint
-        run: cargo clippy -- -D warnings
+        run: cargo clippy --all-targets -- -D warnings

@@ -34,6 +34,9 @@ impl FromStr for Input {
 
 pub fn init() -> Result<Vec<String>> {
     let matches = Command::new("advent-of-code")
+        .version(env!("CARGO_PKG_VERSION"))
+        .author("Jacob Luszcz")
+        .infer_long_args(true)
         .arg(
             Arg::new("verbose")
                 .short('v')
