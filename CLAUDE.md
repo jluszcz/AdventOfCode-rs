@@ -1,7 +1,5 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## Project Overview
 
 `aoc_util` is a **library-only** crate of shared utilities for solving [Advent of Code](https://adventofcode.com/)
