@@ -1,3 +1,10 @@
+//! Shared utilities for Advent of Code solutions.
+//!
+//! The README is included here so its examples are compiled and run by
+//! `cargo test` — they had drifted from the code precisely because nothing
+//! checked them.
+#![doc = include_str!("../README.md")]
+
 pub mod grid;
 pub mod logging;
 pub mod math;

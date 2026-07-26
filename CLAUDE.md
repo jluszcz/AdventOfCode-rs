@@ -51,6 +51,10 @@ live in that shared workflow, not here. It runs build, test, `cargo fmt --check`
   no integration test target.
 - **`Point` is generic** — `Point<T = usize>`. The default keeps grid code terse, but signed instantiations are real
   and tested; don't narrow the parameter to `usize`.
-- **The README is the public API reference.** It is the only API documentation this crate has, and consumers read it
-  instead of the source. Any change to a public signature has to be reflected there in the same commit — the README
-  has drifted from the code before, because nothing compiles its examples.
+- **The README is the public API reference**, and it is compiled. `src/lib.rs` starts with
+  `#![doc = include_str!("../README.md")]`, so every ```` ```rust ```` block in it is a doc-test that `cargo test`
+  runs. A public signature change that the README does not reflect fails the build — which is the point: it had
+  drifted three separate ways before anything checked it.
+- Blocks that are illustrations rather than code (type declarations, pseudo-signatures) are fenced as ```` ```text ````;
+  examples that would touch argv or the filesystem are `no_run`. Prefer making an example genuinely compile over
+  marking it `ignore`.
