@@ -19,4 +19,4 @@ permissions:
 
 jobs:
   ci:
-    uses: jluszcz/github-utils/.github/workflows/rust-ci.yml@v1
+    uses: jluszcz/github-utils/.github/workflows/rust-ci.yml@v2

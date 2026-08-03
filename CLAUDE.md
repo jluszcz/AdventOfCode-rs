@@ -39,7 +39,7 @@ chattier than a real one without asking.
 - `cargo clippy --all-targets -- -D warnings` — lint
 - `pre-commit run --all-files` — the repo's commit gate (`.pre-commit-config.yaml`; includes `cargo fmt --check`)
 
-`.github/workflows/ci.yml` is a thin caller of `jluszcz/github-utils/.github/workflows/rust-ci.yml@v1` — the steps
+`.github/workflows/ci.yml` is a thin caller of `jluszcz/github-utils/.github/workflows/rust-ci.yml` — the steps
 live in that shared workflow, not here. It runs build, test, `cargo fmt --check`, and
 `cargo clippy --all-targets -- -D warnings`, so the commands above are the same set CI enforces.
 
